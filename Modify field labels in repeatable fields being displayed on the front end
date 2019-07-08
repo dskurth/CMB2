@@ -1,0 +1,92 @@
+Field definintion
+	      $cmb->add_group_field( $group_field_id, array(
+								 'name'            => 'Business Name:',
+	               'id'              => 'title',
+	               'type'            => 'text_medium',
+								 'desc'            => '',
+								 'sanitization_cb' => false,
+								 'escape_cb'       => false,
+								 'on_front'        => true,
+								 'attributes'      => array('class' => 'CMB2RequiredField', 'required' => 'required'),	
+ 								 'before'          => '',
+								 'after'           => 'mmdlist_user_add_js_for_adaptivelabels_to_record',
+								 									 
+                            ) );  
+
+
+
+function mmdlist_user_add_js_for_adaptivelabels_to_record($field_args, $field) 
+{
+	
+// Find the names of the Posts within the CMB2. These are from the custom post types and are listed as private
+ $ListingCat1               = mmd_list_readDBSettings("LISTING_CATAGORY1"); 
+ $ListingCat2               = mmd_list_readDBSettings("LISTING_CATAGORY1"); 
+ $ListingCat3               = mmd_list_readDBSettings("LISTING_CATAGORY1");
+ 
+// Get all the posts from a particular catagory. 
+$ListPosts   = array();
+$PostCnt     = 0;
+$query_vars  = array ( 'fields'        => 'ids', 
+                       'numberposts'   => -1, 
+							         'post_type'     => 'mmdlist',
+							         'post_status'   => 'private');
+							
+$posts            = get_posts($query_vars);
+foreach($posts as $ListId)
+  {
+   $PostCnt = $PostCnt + 1;                 // Count the number of post types that are available.
+
+	$PostCatagoryList = get_the_terms( $ListId, 'mmdlist_cat' );
+  foreach($PostCatagoryList as $Cat)
+     {
+	    $PostCatagory = $Cat->name;	
+      if($PostCatagory == $ListingCatagory)
+	      {
+        $ListPosts[]      = $ListId ;
+        $ListPostsLabel[] = "Catagory 1 label:";
+	      }
+	   
+      if($PostCatagory == $HorseCatagory)
+	      {
+         $ListPosts[]      = $ListId ;
+         $ListPostsLabel[] = "Catagory 2 label";	
+	     }
+	   
+  if($PostCatagory == $SaddleCatagory)
+	   {
+       $ListPosts[]      = $ListId ;            
+       $ListPostsLabel[] = "Catagory 3 label";	
+	   }
+	   }  // foreach($PostCatagoryList as $Cat)
+   }  // foreach($posts as $ListId)
+
+
+
+// Use PHP to control how Javascript works by using it as the loop control.
+// While this does waste cycles, it allows the use of PHP loop arrays and parameters.
+ for($i=0; $i<$PostCnt; $i++)
+   {
+  $ListIdValue = $ListPosts[$i];
+  $NewLabel    = $ListPostsLabel[$i];
+	?>
+	<script type="text/javascript">
+    jQuery( function( $ )    {
+		var $box = $( document.getElementById( 'mmd_lists_UserProfile' ) );
+		var $row = -1;	
+        $box.find( '.cmb-group-title' ).each( function() 
+		   {
+			var $this  = $( this );
+			var $ListId = $this.next().find( '[id$="user_listid"]' ).val(); 
+			$row=$row+1;
+			if($ListId ==  <?php echo $ListIdValue; ?>)
+			  {
+	            var $box = $('label[for="mmdUserProfile_'+ $row +'_user_title"]');
+                $box.text('<?php echo $NewLabel ?>');
+			  }
+			});
+    });
+	
+	</script>
+ <?php
+   }   //  for($i=0; $i<$PostCnt; $i++)
+}
